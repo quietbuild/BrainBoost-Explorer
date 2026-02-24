@@ -1,49 +1,68 @@
-async function searchWord() {
-  const word = document.getElementById("wordInput").value.trim();
-  if (!word) return alert("Enter a word.");
+async function searchTopic(topicOverride = null) {
+  const topic = topicOverride || document.getElementById("topicInput").value.trim();
+  if (!topic) {
+    alert("Please enter a topic.");
+    return;
+  }
 
   document.getElementById("results").classList.remove("hidden");
 
   try {
-    // Dictionary API
-    const dictRes = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
-    const dictData = await dictRes.json();
+    const response = await fetch(
+      `https://en.wikipedia.org/api/rest_v1/page/mobile-sections/${encodeURIComponent(topic)}`
+    );
+    const data = await response.json();
 
-    if (Array.isArray(dictData)) {
-      const meaning = dictData[0].meanings[0].definitions[0].definition;
-      const synonyms = dictData[0].meanings[0].synonyms || [];
-      const antonyms = dictData[0].meanings[0].antonyms || [];
-
-      document.getElementById("meaning").innerText = meaning;
-
-      const synList = document.getElementById("synonyms");
-      synList.innerHTML = "";
-      synonyms.slice(0,8).forEach(s => {
-        synList.innerHTML += `<li>${s}</li>`;
-      });
-
-      const antList = document.getElementById("antonyms");
-      antList.innerHTML = "";
-      antonyms.slice(0,8).forEach(a => {
-        antList.innerHTML += `<li>${a}</li>`;
-      });
-    } else {
-      document.getElementById("meaning").innerText = "No dictionary result found.";
+    if (!data.lead) {
+      alert("Topic not found.");
+      return;
     }
 
-    // Wikipedia Explanation
-    const wikiRes = await fetch(
-      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(word)}`
-    );
-    const wikiData = await wikiRes.json();
+    // Overview
+    let introText = "";
+    data.lead.sections.forEach(section => {
+      introText += section.text + " ";
+    });
 
-    document.getElementById("wiki").innerText = wikiData.extract || "No detailed explanation found.";
+    introText = introText
+      .replace(/<[^>]+>/g, "")
+      .replace(/\[[^\]]*\]/g, "")
+      .trim();
 
-    document.getElementById("source").innerHTML =
-      `Sources: DictionaryAPI.dev & <a href="${wikiData.content_urls?.desktop?.page || '#'}" target="_blank">Wikipedia</a>`;
+    document.getElementById("overview").innerText =
+      introText.split(". ").slice(0,4).join(". ") + ".";
+
+    // Sections
+    const sectionsDiv = document.getElementById("sections");
+    sectionsDiv.innerHTML = "";
+    (data.remaining?.sections || []).slice(0,8).forEach(section => {
+      if (section.line) {
+        const btn = document.createElement("button");
+        btn.innerText = section.line;
+        btn.onclick = () => {
+          const content = section.text
+            .replace(/<[^>]+>/g, "")
+            .replace(/\[[^\]]*\]/g, "")
+            .trim();
+          document.getElementById("overview").innerText =
+            content.split(". ").slice(0,5).join(". ") + ".";
+        };
+        sectionsDiv.appendChild(btn);
+      }
+    });
+
+    // Related Topics
+    const relatedDiv = document.getElementById("related");
+    relatedDiv.innerHTML = "";
+    (data.lead.sections[0].links || []).slice(0,10).forEach(link => {
+      const btn = document.createElement("button");
+      btn.innerText = link.text;
+      btn.onclick = () => searchTopic(link.text);
+      relatedDiv.appendChild(btn);
+    });
 
   } catch (error) {
-    alert("Error fetching data.");
+    alert("Error loading topic.");
     console.error(error);
   }
 }
