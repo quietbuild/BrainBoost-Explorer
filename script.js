@@ -8,38 +8,42 @@ async function searchTopic(topicOverride = null) {
   document.getElementById("results").classList.remove("hidden");
 
   try {
-    // 1️⃣ Get summary
-    const summaryRes = await fetch(
-      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(topic)}`
+    // Use official Wikipedia API with CORS support
+    const response = await fetch(
+      `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=extracts&exintro=true&explaintext=true&titles=${encodeURIComponent(topic)}`
     );
-    const summaryData = await summaryRes.json();
 
-    if (!summaryData.extract) {
+    const data = await response.json();
+
+    const pages = data.query.pages;
+    const page = Object.values(pages)[0];
+
+    if (!page.extract) {
       alert("Topic not found.");
       return;
     }
 
-    document.getElementById("overview").innerText = summaryData.extract;
+    document.getElementById("overview").innerText = page.extract;
 
-    // 2️⃣ Get related links (simpler method)
-    const relatedRes = await fetch(
-      `https://en.wikipedia.org/api/rest_v1/page/related/${encodeURIComponent(topic)}`
+    // Clear sections for now
+    document.getElementById("sections").innerHTML =
+      "<p>Related exploration coming soon.</p>";
+
+    // Simple related search using search API
+    const relatedResponse = await fetch(
+      `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&list=search&srsearch=${encodeURIComponent(topic)}&srlimit=8`
     );
-    const relatedData = await relatedRes.json();
 
+    const relatedData = await relatedResponse.json();
     const relatedDiv = document.getElementById("related");
     relatedDiv.innerHTML = "";
 
-    (relatedData.pages || []).slice(0, 8).forEach(page => {
+    relatedData.query.search.forEach(result => {
       const btn = document.createElement("button");
-      btn.innerText = page.title;
-      btn.onclick = () => searchTopic(page.title);
+      btn.innerText = result.title;
+      btn.onclick = () => searchTopic(result.title);
       relatedDiv.appendChild(btn);
     });
-
-    // 3️⃣ Remove section feature (since it was unstable)
-    const sectionsDiv = document.getElementById("sections");
-    sectionsDiv.innerHTML = "<p>Use related topics to explore deeper.</p>";
 
   } catch (error) {
     alert("Error loading topic.");
