@@ -2,52 +2,49 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>BrainBoost Lexicon</title>
+  <title>BrainBoost Explorer</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <header>
-  <div class="brand">BrainBoost Lexicon</div>
+  <div class="brand">BrainBoost Explorer</div>
   <div class="signature">Built by Vrishab Varun</div>
 </header>
 
 <section class="hero">
-  <h1>Precision Word Intelligence</h1>
-  <p>Meaning. Synonyms. Antonyms. Clean knowledge.</p>
+  <h1>Explore Knowledge Instantly</h1>
+  <p>Search any topic and explore structured information from Wikipedia.</p>
 
   <div class="search-box">
-    <input type="text" id="wordInput" placeholder="Enter a word (e.g., Resilient)">
-    <button onclick="searchWord()">Search</button>
+    <input type="text" id="topicInput" placeholder="Type a topic...">
+    <button onclick="searchTopic()">Search</button>
   </div>
 </section>
 
 <section id="results" class="hidden">
 
   <div class="card">
-    <h2>Meaning</h2>
-    <p id="meaning"></p>
+    <h2>Overview</h2>
+    <p id="overview"></p>
   </div>
 
   <div class="card">
-    <h2>Detailed Explanation</h2>
-    <p id="wiki"></p>
+    <h2>Sections</h2>
+    <div id="sections"></div>
   </div>
 
   <div class="card">
-    <h2>Synonyms</h2>
-    <ul id="synonyms"></ul>
+    <h2>Related Topics</h2>
+    <div id="related"></div>
   </div>
-
-  <div class="card">
-    <h2>Antonyms</h2>
-    <ul id="antonyms"></ul>
-  </div>
-
-  <div class="source" id="source"></div>
 
 </section>
 
-</body>
+<footer>
+  <p>© BrainBoost Explorer — Built by Vrishab Varun</p>
+</footer>
+
 <script src="script.js"></script>
-</html>
+</body>
+</html> 
