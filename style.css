@@ -1,32 +1,32 @@
 body {
-  margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  margin: 0;
   background: #f4f6f9;
   color: #1a1a1a;
 }
 
-.topbar {
+header {
   display: flex;
   justify-content: space-between;
   padding: 20px 40px;
   background: white;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
-.brand {
-  font-size: 20px;
+.logo {
   font-weight: 700;
+  font-size: 22px;
   color: #2b4eff;
 }
 
-.signature {
+.builder {
   font-size: 14px;
-  color: #777;
+  color: #666;
 }
 
 .hero {
   text-align: center;
-  padding: 60px 20px 30px 20px;
+  padding: 60px 20px;
 }
 
 .hero h1 {
@@ -34,20 +34,20 @@ body {
   margin-bottom: 10px;
 }
 
-.search-area {
+.search-box {
   margin-top: 20px;
 }
 
 input {
   padding: 12px;
-  width: 260px;
+  width: 280px;
   border-radius: 6px;
   border: 1px solid #ccc;
 }
 
 button {
-  padding: 12px 18px;
-  margin-left: 8px;
+  padding: 12px 16px;
+  margin-left: 10px;
   border-radius: 6px;
   border: none;
   background: #2b4eff;
@@ -56,49 +56,33 @@ button {
 }
 
 button:hover {
-  background: #1f38c9;
+  background: #1d36b5;
 }
 
-.results {
-  max-width: 900px;
-  margin: 40px auto;
-}
-
-.panel {
+.card {
   background: white;
+  margin: 30px auto;
   padding: 25px;
   border-radius: 12px;
-  margin-bottom: 25px;
+  max-width: 800px;
   box-shadow: 0 5px 20px rgba(0,0,0,0.06);
-}
-
-ul {
-  padding-left: 20px;
 }
 
 .flashcard {
   background: #f9fbff;
-  padding: 18px;
-  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 12px;
   border-left: 4px solid #2b4eff;
-}
-
-.source {
-  text-align: center;
-  margin-top: 30px;
-  font-size: 14px;
-  color: #666;
-}
-
-footer {
-  text-align: center;
-  padding: 20px;
-  background: white;
-  font-size: 14px;
-  color: #777;
-  margin-top: 40px;
+  border-radius: 6px;
 }
 
 .hidden {
   display: none;
+}
+
+.footer-info {
+  text-align: center;
+  margin-bottom: 40px;
+  font-size: 14px;
+  color: #777;
 }
