@@ -1,67 +1,89 @@
 async function generateContent() {
   const topic = document.getElementById("topicInput").value.trim();
-  if (!topic) return alert("Enter a topic.");
-
-  const response = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(topic)}`);
-  const data = await response.json();
-
-  if (!data.extract) {
-    alert("Topic not found.");
+  if (!topic) {
+    alert("Enter a topic.");
     return;
   }
 
-  document.getElementById("results").classList.remove("hidden");
+  try {
+    const response = await fetch(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(topic)}`
+    );
 
-  const cleanText = data.extract.replace(/\[[^\]]*\]/g, "");
+    const data = await response.json();
 
-  generateSummary(cleanText);
-  generateKeyPoints(cleanText);
-  generateFlashcards(cleanText, topic);
+    if (!data.extract) {
+      alert("Topic not found.");
+      return;
+    }
 
-  document.getElementById("source").innerHTML =
-    `Source: <a href="${data.content_urls.desktop.page}" target="_blank">Wikipedia</a>`;
+    document.getElementById("results").classList.remove("hidden");
+
+    const cleanText = data.extract.replace(/\[[^\]]*\]/g, "");
+
+    generateSummary(cleanText);
+    generateKeyPoints(cleanText);
+    generateFlashcards(cleanText, data.title);
+
+    document.getElementById("source").innerHTML =
+      `Source: <a href="${data.content_urls.desktop.page}" target="_blank">Wikipedia</a>`;
+
+  } catch (error) {
+    alert("Error loading topic.");
+    console.error(error);
+  }
 }
 
+/* ========================
+   CLEAN SUMMARY
+======================== */
 function generateSummary(text) {
-  const sentences = text.split(". ");
-  const wordFreq = {};
+  const sentences = text.split(". ").slice(0,4);
+  document.getElementById("summary").innerText = sentences.join(". ") + ".";
+}
 
-  text.toLowerCase().split(/\W+/).forEach(word => {
-    if (word.length > 4) {
-      wordFreq[word] = (wordFreq[word] || 0) + 1;
+/* ========================
+   BETTER KEY CONCEPTS
+======================== */
+function generateKeyPoints(text) {
+  const stopwords = [
+    "the","this","that","with","from","have","were","been","into",
+    "about","which","their","there","almost","most","also","only",
+    "earth","planet"
+  ];
+
+  const words = text.toLowerCase().match(/\b[a-z]{5,}\b/g) || [];
+  const freq = {};
+
+  words.forEach(word => {
+    if (!stopwords.includes(word)) {
+      freq[word] = (freq[word] || 0) + 1;
     }
   });
 
-  const scored = sentences.map(sentence => {
-    let score = 0;
-    sentence.toLowerCase().split(/\W+/).forEach(word => {
-      if (wordFreq[word]) score += wordFreq[word];
-    });
-    return { sentence, score };
-  });
-
-  scored.sort((a, b) => b.score - a.score);
-  const topSentences = scored.slice(0, 3).map(s => s.sentence).join(". ");
-
-  document.getElementById("summary").innerText = topSentences;
-}
-
-function generateKeyPoints(text) {
-  const words = text.match(/\b[A-Z][a-z]+\b/g) || [];
-  const unique = [...new Set(words)].slice(0, 8);
+  const sorted = Object.entries(freq)
+    .sort((a,b) => b[1] - a[1])
+    .slice(0,8)
+    .map(entry => entry[0]);
 
   const list = document.getElementById("keyPoints");
   list.innerHTML = "";
 
-  unique.forEach(word => {
+  sorted.forEach(word => {
     const li = document.createElement("li");
-    li.textContent = word;
+    li.textContent = word.charAt(0).toUpperCase() + word.slice(1);
     list.appendChild(li);
   });
 }
 
-function generateFlashcards(text, topic) {
-  const sentences = text.split(". ").slice(0, 5);
+/* ========================
+   CLEAN STATEMENT FLASHCARDS
+======================== */
+function generateFlashcards(text, title) {
+  const sentences = text
+    .split(". ")
+    .filter(s => s.length > 50)
+    .slice(0,6);
 
   const container = document.getElementById("flashcards");
   container.innerHTML = "";
@@ -71,8 +93,8 @@ function generateFlashcards(text, topic) {
     card.className = "flashcard";
 
     card.innerHTML = `
-      <strong>Q:</strong> What is related to ${topic}?<br>
-      <strong>A:</strong> ${sentence}
+      <strong>${title}:</strong><br>
+      ${sentence.trim()}.
     `;
 
     container.appendChild(card);
