@@ -1,3 +1,38 @@
+// POLICY CONTROL (NO MEMORY — ALWAYS SHOWS)
+
+function acceptPolicy() {
+  document.getElementById("policyOverlay").style.display = "none";
+}
+
+function declinePolicy() {
+  document.body.innerHTML = `
+    <div style="
+      height:100vh;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      background:#0f172a;
+      color:white;
+      text-align:center;
+      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+      padding:20px;
+    ">
+      <div>
+        <h1 style="font-size:32px;margin-bottom:15px;">
+          Access Restricted
+        </h1>
+        <p style="font-size:16px;opacity:0.8;margin-bottom:20px;">
+          BrainBoost Explorer requires acceptance of its usage policy.
+        </p>
+        <p style="font-size:13px;opacity:0.6;">
+          © 2026 Vrishab Varun. All rights reserved.
+        </p>
+      </div>
+    </div>
+  `;
+}
+
+// MAIN SEARCH FUNCTION
 async function searchTopic(topicOverride = null) {
   const topic = topicOverride || document.getElementById("topicInput").value.trim();
   if (!topic) {
@@ -8,29 +43,32 @@ async function searchTopic(topicOverride = null) {
   document.getElementById("results").classList.remove("hidden");
 
   try {
-    // OFFICIAL MediaWiki API with CORS enabled
-    const response = await fetch(
-      `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=extracts&exintro=true&explaintext=true&titles=${encodeURIComponent(topic)}`
+    const summaryRes = await fetch(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(topic)}`
     );
+    const summaryData = await summaryRes.json();
 
-    const data = await response.json();
-    const pages = data.query.pages;
-    const page = Object.values(pages)[0];
-
-    if (!page.extract) {
+    if (!summaryData.extract) {
       alert("Topic not found.");
       return;
     }
 
-    // Overview
-    document.getElementById("overview").innerText = page.extract;
+    document.getElementById("title").innerText = summaryData.title;
+    document.getElementById("overview").innerText =
+      summaryData.extract.split(". ").slice(0, 4).join(". ") + ".";
 
-    // Related topics (search API)
-    const relatedResponse = await fetch(
+    const imageContainer = document.getElementById("image");
+    imageContainer.innerHTML = "";
+    if (summaryData.thumbnail) {
+      imageContainer.innerHTML =
+        `<img src="${summaryData.thumbnail.source}" alt="${summaryData.title}">`;
+    }
+
+    const relatedRes = await fetch(
       `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&list=search&srsearch=${encodeURIComponent(topic)}&srlimit=8`
     );
+    const relatedData = await relatedRes.json();
 
-    const relatedData = await relatedResponse.json();
     const relatedDiv = document.getElementById("related");
     relatedDiv.innerHTML = "";
 
@@ -40,10 +78,6 @@ async function searchTopic(topicOverride = null) {
       btn.onclick = () => searchTopic(result.title);
       relatedDiv.appendChild(btn);
     });
-
-    // Simple message for sections
-    document.getElementById("sections").innerHTML =
-      "<p>Explore related topics to navigate deeper.</p>";
 
   } catch (error) {
     alert("Error loading topic.");
