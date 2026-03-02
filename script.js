@@ -1,5 +1,3 @@
-// POLICY CONTROL (NO MEMORY — ALWAYS SHOWS)
-
 function acceptPolicy() {
   document.getElementById("policyOverlay").style.display = "none";
 }
@@ -18,13 +16,9 @@ function declinePolicy() {
       padding:20px;
     ">
       <div>
-        <h1 style="font-size:32px;margin-bottom:15px;">
-          Access Restricted
-        </h1>
-        <p style="font-size:16px;opacity:0.8;margin-bottom:20px;">
-          BrainBoost Explorer requires acceptance of its usage policy.
-        </p>
-        <p style="font-size:13px;opacity:0.6;">
+        <h1>Access Restricted</h1>
+        <p>BrainBoost Explorer requires acceptance of its usage policy.</p>
+        <p style="opacity:0.6;font-size:13px;">
           © 2026 Vrishab Varun. All rights reserved.
         </p>
       </div>
@@ -32,15 +26,11 @@ function declinePolicy() {
   `;
 }
 
-// MAIN SEARCH FUNCTION
 async function searchTopic(topicOverride = null) {
   const topic = topicOverride || document.getElementById("topicInput").value.trim();
-  if (!topic) {
-    alert("Please enter a topic.");
-    return;
-  }
+  if (!topic) return;
 
-  document.getElementById("results").classList.remove("hidden");
+  document.getElementById("results").style.display = "block";
 
   try {
     const summaryRes = await fetch(
@@ -54,8 +44,7 @@ async function searchTopic(topicOverride = null) {
     }
 
     document.getElementById("title").innerText = summaryData.title;
-    document.getElementById("overview").innerText =
-      summaryData.extract.split(". ").slice(0, 4).join(". ") + ".";
+    document.getElementById("overview").innerText = summaryData.extract;
 
     const imageContainer = document.getElementById("image");
     imageContainer.innerHTML = "";
@@ -65,7 +54,7 @@ async function searchTopic(topicOverride = null) {
     }
 
     const relatedRes = await fetch(
-      `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&list=search&srsearch=${encodeURIComponent(topic)}&srlimit=8`
+      `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&list=search&srsearch=${encodeURIComponent(topic)}&srlimit=6`
     );
     const relatedData = await relatedRes.json();
 
