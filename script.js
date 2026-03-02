@@ -33,31 +33,38 @@ async function searchTopic(topicOverride = null) {
   document.getElementById("results").style.display = "block";
 
   try {
-    const summaryRes = await fetch(
-      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(topic)}`
-    );
-    const summaryData = await summaryRes.json();
 
-    if (!summaryData.extract) {
+    // SAFE WIKIPEDIA API CALL
+    const response = await fetch(
+      `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=extracts|pageimages&exintro=true&explaintext=true&pithumbsize=600&titles=${encodeURIComponent(topic)}`
+    );
+
+    const data = await response.json();
+    const pages = data.query.pages;
+    const page = pages[Object.keys(pages)[0]];
+
+    if (!page.extract) {
       alert("Topic not found.");
       return;
     }
 
-    document.getElementById("title").innerText = summaryData.title;
-    document.getElementById("overview").innerText = summaryData.extract;
+    document.getElementById("title").innerText = page.title;
+    document.getElementById("overview").innerText = page.extract;
 
     const imageContainer = document.getElementById("image");
     imageContainer.innerHTML = "";
-    if (summaryData.thumbnail) {
+
+    if (page.thumbnail) {
       imageContainer.innerHTML =
-        `<img src="${summaryData.thumbnail.source}" alt="${summaryData.title}">`;
+        `<img src="${page.thumbnail.source}" alt="${page.title}">`;
     }
 
+    // RELATED SEARCH
     const relatedRes = await fetch(
       `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&list=search&srsearch=${encodeURIComponent(topic)}&srlimit=6`
     );
-    const relatedData = await relatedRes.json();
 
+    const relatedData = await relatedRes.json();
     const relatedDiv = document.getElementById("related");
     relatedDiv.innerHTML = "";
 
@@ -69,7 +76,7 @@ async function searchTopic(topicOverride = null) {
     });
 
   } catch (error) {
-    alert("Error loading topic.");
     console.error(error);
+    alert("Error loading topic.");
   }
 }
