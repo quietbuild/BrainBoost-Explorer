@@ -2,28 +2,32 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>BrainBoost Explorer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BrainBoost X</title>
 
 <style>
 body {
   margin:0;
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  background:#0f172a;
-  color:#e2e8f0;
+  background:#0b0f14;
+  color:#e8edf2;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 header {
   text-align:center;
-  padding:40px 20px;
+  padding:60px 20px 30px 20px;
 }
 
 header h1 {
-  font-size:40px;
+  font-size:42px;
   margin:0;
+  font-weight:600;
+  letter-spacing:1px;
 }
 
 header p {
-  opacity:0.7;
+  opacity:0.6;
+  margin-top:8px;
 }
 
 .container {
@@ -32,121 +36,85 @@ header p {
   padding:20px;
 }
 
+.search-box {
+  display:flex;
+  gap:10px;
+}
+
 input {
-  width:70%;
-  padding:12px;
+  flex:1;
+  padding:14px;
+  border-radius:10px;
   border:none;
-  border-radius:8px;
   font-size:16px;
+  background:#11161c;
+  color:white;
 }
 
 button {
-  padding:12px 18px;
+  padding:14px 20px;
   border:none;
-  border-radius:8px;
-  background:#2563eb;
+  border-radius:10px;
+  background:#1f6feb;
   color:white;
-  font-size:16px;
+  font-weight:500;
   cursor:pointer;
 }
 
 button:hover {
-  background:#1d4ed8;
+  background:#2f81f7;
 }
 
 .card {
-  background:#1e293b;
-  padding:20px;
-  border-radius:12px;
-  margin-top:20px;
+  margin-top:30px;
+  background:#11161c;
+  padding:25px;
+  border-radius:16px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+}
+
+.card h2 {
+  margin-top:0;
 }
 
 #image img {
   width:100%;
-  border-radius:10px;
-  margin-top:15px;
+  border-radius:12px;
+  margin:15px 0;
 }
 
-#related button {
-  margin:5px;
-  background:#334155;
+.suggestions button {
+  margin:5px 5px 0 0;
+  background:#1c222a;
 }
 
-#related button:hover {
-  background:#475569;
+.suggestions button:hover {
+  background:#2a313a;
 }
 
 footer {
   text-align:center;
-  padding:30px;
-  opacity:0.6;
-}
-
-/* POLICY SCREEN */
-
-#policyOverlay {
-  position:fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  background:#0f172a;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  z-index:9999;
-}
-
-.policyBox {
-  background:#1e293b;
-  padding:40px;
-  border-radius:16px;
-  max-width:500px;
-  text-align:center;
-}
-
-.policyBox h2 {
-  margin-top:0;
-}
-
-.policyButtons {
-  margin-top:20px;
-}
-
-.policyButtons button {
-  margin:5px;
+  padding:50px 20px;
+  opacity:0.5;
+  font-size:14px;
 }
 </style>
 </head>
 
 <body>
 
-<div id="policyOverlay">
-  <div class="policyBox">
-    <h2>BrainBoost Explorer</h2>
-    <p><strong>Built by Vrishab Varun</strong></p>
-    <p>
-      This platform provides structured knowledge from Wikipedia for educational use.
-      By clicking Accept, you agree to use this tool responsibly.
-    </p>
-    <p style="font-size:12px;opacity:0.6;">
-      © 2026 Vrishab Varun. All rights reserved.
-    </p>
-    <div class="policyButtons">
-      <button onclick="acceptPolicy()">Accept</button>
-      <button onclick="declinePolicy()">Decline</button>
-    </div>
-  </div>
-</div>
-
 <header>
-  <h1>BrainBoost Explorer</h1>
-  <p>Explore knowledge instantly</p>
+  <h1>BrainBoost X</h1>
+  <p>Private Intelligence Engine</p>
 </header>
 
 <div class="container">
-  <input id="topicInput" placeholder="Search a topic...">
-  <button onclick="searchTopic()">Search</button>
+
+  <div class="search-box">
+    <input id="topicInput" placeholder="Search anything...">
+    <button onclick="searchTopic()">Explore</button>
+    <button onclick="randomTopic()">Random</button>
+  </div>
 
   <div id="results" class="card" style="display:none;">
     <h2 id="title"></h2>
@@ -154,15 +122,88 @@ footer {
     <p id="overview"></p>
 
     <h3>Related Topics</h3>
-    <div id="related"></div>
+    <div id="related" class="suggestions"></div>
   </div>
+
 </div>
 
 <footer>
-© BrainBoost Explorer — Built by Vrishab Varun
+BrainBoost X<br>
+Engineered by Vrishab Varun<br>
+© 2026
 </footer>
 
-<script src="script.js"></script>
+<script>
+async function searchTopic(topicOverride=null) {
+
+  const input = topicOverride || document.getElementById("topicInput").value.trim();
+  if(!input) return;
+
+  document.getElementById("results").style.display="block";
+  document.getElementById("title").innerText="Thinking...";
+  document.getElementById("overview").innerText="";
+
+  try {
+
+    // Intelligent search (forgiving)
+    const searchRes = await fetch(
+      `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&list=search&srsearch=${encodeURIComponent(input)}&srlimit=1`
+    );
+    const searchData = await searchRes.json();
+
+    if(!searchData.query.search.length) {
+      document.getElementById("title").innerText="No results found";
+      return;
+    }
+
+    const bestMatch = searchData.query.search[0].title;
+
+    const summaryRes = await fetch(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(bestMatch)}`
+    );
+
+    const summaryData = await summaryRes.json();
+
+    document.getElementById("title").innerText = summaryData.title;
+    document.getElementById("overview").innerText = summaryData.extract;
+
+    const imageContainer = document.getElementById("image");
+    imageContainer.innerHTML="";
+
+    if(summaryData.thumbnail) {
+      imageContainer.innerHTML = 
+        `<img src="${summaryData.thumbnail.source}" alt="${summaryData.title}">`;
+    }
+
+    // Related suggestions
+    const relatedRes = await fetch(
+      `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&list=search&srsearch=${encodeURIComponent(bestMatch)}&srlimit=6`
+    );
+
+    const relatedData = await relatedRes.json();
+    const relatedDiv = document.getElementById("related");
+    relatedDiv.innerHTML="";
+
+    relatedData.query.search.forEach(item=>{
+      const btn = document.createElement("button");
+      btn.innerText=item.title;
+      btn.onclick=()=>searchTopic(item.title);
+      relatedDiv.appendChild(btn);
+    });
+
+  } catch(error) {
+    document.getElementById("title").innerText="Error loading topic";
+  }
+}
+
+function randomTopic() {
+  fetch("https://en.wikipedia.org/api/rest_v1/page/random/summary")
+    .then(res=>res.json())
+    .then(data=>{
+      searchTopic(data.title);
+    });
+}
+</script>
 
 </body>
 </html>
