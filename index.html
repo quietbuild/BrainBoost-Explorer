@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BrainBoost Explorer</title>
 
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000000">
+
 <style>
 body{
   margin:0;
@@ -15,98 +18,37 @@ body{
   background-size:400% 400%;
   animation: gradientShift 15s ease infinite;
 }
-
 @keyframes gradientShift{
   0%{background-position:0% 50%;}
   50%{background-position:100% 50%;}
   100%{background-position:0% 50%;}
 }
-
-header{
-  text-align:center;
-  padding:60px 20px 30px;
-}
-
-header h1{
-  font-size:42px;
-  margin:0;
-  text-shadow:0 0 20px rgba(255,255,255,0.5);
-}
-
-header p{
-  margin-top:10px;
-  opacity:0.9;
-}
-
-.container{
-  max-width:900px;
-  margin:auto;
-  padding:20px;
-}
-
+header{text-align:center;padding:60px 20px 30px;}
+header h1{font-size:42px;margin:0;}
+.container{max-width:900px;margin:auto;padding:20px;}
 .search-box{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
+  display:flex;gap:10px;flex-wrap:wrap;
   background:rgba(0,0,0,0.5);
   backdrop-filter:blur(15px);
-  padding:20px;
-  border-radius:20px;
+  padding:20px;border-radius:20px;
 }
-
 input{
-  flex:1;
-  min-width:200px;
-  padding:14px;
-  border-radius:12px;
-  border:none;
-  font-size:16px;
+  flex:1;min-width:200px;padding:14px;
+  border-radius:12px;border:none;font-size:16px;
 }
-
 button{
-  padding:14px 20px;
-  border:none;
-  border-radius:12px;
-  font-weight:600;
-  cursor:pointer;
+  padding:14px 20px;border:none;border-radius:12px;
+  font-weight:600;cursor:pointer;
 }
-
-button:first-of-type{
-  background:#ffffff;
-  color:#000;
-}
-
-button:last-of-type{
-  background:#222;
-  color:#fff;
-}
-
+button:first-of-type{background:#ffffff;color:#000;}
+button:last-of-type{background:#222;color:#fff;}
 .card{
-  margin-top:30px;
-  background:rgba(0,0,0,0.5);
+  margin-top:30px;background:rgba(0,0,0,0.5);
   backdrop-filter:blur(15px);
-  padding:25px;
-  border-radius:20px;
+  padding:25px;border-radius:20px;
 }
-
-#image img{
-  width:100%;
-  border-radius:15px;
-  margin:15px 0;
-}
-
-.suggestions button{
-  margin:5px 5px 0 0;
-  background:#333;
-  color:#fff;
-}
-
-footer{
-  text-align:center;
-  padding:50px 20px;
-  opacity:0.9;
-  font-size:14px;
-}
+#image img{width:100%;border-radius:15px;margin:15px 0;}
+footer{text-align:center;padding:50px 20px;font-size:14px;}
 </style>
 </head>
 
@@ -118,7 +60,6 @@ footer{
 </header>
 
 <div class="container">
-
   <div class="search-box">
     <input id="topicInput" placeholder="Search anything...">
     <button onclick="searchTopic()">Search</button>
@@ -129,10 +70,8 @@ footer{
     <h2 id="title"></h2>
     <div id="image"></div>
     <p id="overview"></p>
-    <h3>Related Topics</h3>
-    <div id="related" class="suggestions"></div>
+    <div id="related"></div>
   </div>
-
 </div>
 
 <footer>
@@ -141,14 +80,15 @@ footer{
 
 <script>
 
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+
 document.getElementById("topicInput").addEventListener("keydown", function(e){
-  if(e.key==="Enter"){
-    searchTopic();
-  }
+  if(e.key==="Enter"){ searchTopic(); }
 });
 
 async function searchTopic(topicOverride=null){
-
   const inputField=document.getElementById("topicInput");
   const input=topicOverride || inputField.value.trim();
   if(!input) return;
@@ -160,16 +100,13 @@ async function searchTopic(topicOverride=null){
   document.getElementById("related").innerHTML="";
 
   try{
-
     const searchRes=await fetch(
       `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&list=search&srsearch=${encodeURIComponent(input)}&srlimit=5`
     );
-
     const searchData=await searchRes.json();
 
     if(!searchData.query.search.length){
       document.getElementById("title").innerText="No Results Found";
-      document.getElementById("overview").innerText="Try another spelling.";
       return;
     }
 
@@ -178,7 +115,6 @@ async function searchTopic(topicOverride=null){
     const summaryRes=await fetch(
       `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(bestMatch)}`
     );
-
     const summaryData=await summaryRes.json();
 
     document.getElementById("title").innerText=summaryData.title;
@@ -186,28 +122,18 @@ async function searchTopic(topicOverride=null){
 
     if(summaryData.thumbnail){
       document.getElementById("image").innerHTML=
-        `<img src="${summaryData.thumbnail.source}" alt="${summaryData.title}">`;
+        `<img src="${summaryData.thumbnail.source}">`;
     }
-
-    searchData.query.search.slice(1,6).forEach(item=>{
-      const btn=document.createElement("button");
-      btn.innerText=item.title;
-      btn.onclick=()=>searchTopic(item.title);
-      document.getElementById("related").appendChild(btn);
-    });
 
   }catch(error){
     document.getElementById("title").innerText="Connection Error";
-    document.getElementById("overview").innerText="Check internet connection.";
   }
 }
 
 function randomTopic(){
   fetch("https://en.wikipedia.org/api/rest_v1/page/random/summary")
     .then(res=>res.json())
-    .then(data=>{
-      searchTopic(data.title);
-    });
+    .then(data=>searchTopic(data.title));
 }
 
 </script>
