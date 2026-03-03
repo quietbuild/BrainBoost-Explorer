@@ -13,42 +13,67 @@ body{
   margin:0;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   color:#fff;
+  background:linear-gradient(135deg,#111,#1f1f1f,#000);
   min-height:100vh;
-  background: linear-gradient(-45deg,#ff0066,#6a00ff,#00c3ff,#00ff88,#ffcc00);
-  background-size:400% 400%;
-  animation: gradientShift 15s ease infinite;
 }
-@keyframes gradientShift{
-  0%{background-position:0% 50%;}
-  50%{background-position:100% 50%;}
-  100%{background-position:0% 50%;}
+
+header{
+  text-align:center;
+  padding:60px 20px 30px;
 }
-header{text-align:center;padding:60px 20px 30px;}
-header h1{font-size:42px;margin:0;}
-.container{max-width:900px;margin:auto;padding:20px;}
+
+header h1{
+  font-size:40px;
+  margin:0;
+}
+
+.container{
+  max-width:900px;
+  margin:auto;
+  padding:20px;
+}
+
 .search-box{
-  display:flex;gap:10px;flex-wrap:wrap;
-  background:rgba(0,0,0,0.5);
-  backdrop-filter:blur(15px);
-  padding:20px;border-radius:20px;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  background:#111;
+  padding:20px;
+  border-radius:20px;
 }
+
 input{
-  flex:1;min-width:200px;padding:14px;
-  border-radius:12px;border:none;font-size:16px;
+  flex:1;
+  padding:14px;
+  border-radius:10px;
+  border:none;
+  font-size:16px;
 }
+
 button{
-  padding:14px 20px;border:none;border-radius:12px;
-  font-weight:600;cursor:pointer;
+  padding:14px 20px;
+  border:none;
+  border-radius:10px;
+  font-weight:600;
+  cursor:pointer;
 }
-button:first-of-type{background:#ffffff;color:#000;}
-button:last-of-type{background:#222;color:#fff;}
+
 .card{
-  margin-top:30px;background:rgba(0,0,0,0.5);
-  backdrop-filter:blur(15px);
-  padding:25px;border-radius:20px;
+  margin-top:30px;
+  background:#111;
+  padding:25px;
+  border-radius:20px;
 }
-#image img{width:100%;border-radius:15px;margin:15px 0;}
-footer{text-align:center;padding:50px 20px;font-size:14px;}
+
+#overview{
+  line-height:1.6;
+  margin-top:15px;
+}
+
+.hidden{
+  display:none;
+}
+
 </style>
 </head>
 
@@ -60,23 +85,22 @@ footer{text-align:center;padding:50px 20px;font-size:14px;}
 </header>
 
 <div class="container">
+
   <div class="search-box">
     <input id="topicInput" placeholder="Search anything...">
     <button onclick="searchTopic()">Search</button>
     <button onclick="randomTopic()">Random</button>
   </div>
 
-  <div id="results" class="card" style="display:none;">
+  <div id="results" class="card hidden">
     <h2 id="title"></h2>
     <div id="image"></div>
-    <p id="overview"></p>
-    <div id="related"></div>
+    <div id="overview"></div>
+    <button id="toggleBtn" onclick="toggleText()" class="hidden">Show More</button>
+    <button onclick="copyText()">Copy Summary</button>
   </div>
-</div>
 
-<footer>
-© 2026 BrainBoost Explorer
-</footer>
+</div>
 
 <script>
 
@@ -88,20 +112,25 @@ document.getElementById("topicInput").addEventListener("keydown", function(e){
   if(e.key==="Enter"){ searchTopic(); }
 });
 
+let fullText="";
+let collapsed=true;
+
 async function searchTopic(topicOverride=null){
+
   const inputField=document.getElementById("topicInput");
   const input=topicOverride || inputField.value.trim();
   if(!input) return;
 
-  document.getElementById("results").style.display="block";
+  document.getElementById("results").classList.remove("hidden");
   document.getElementById("title").innerText="Searching...";
   document.getElementById("overview").innerText="";
   document.getElementById("image").innerHTML="";
-  document.getElementById("related").innerHTML="";
+  document.getElementById("toggleBtn").classList.add("hidden");
 
   try{
+
     const searchRes=await fetch(
-      `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&list=search&srsearch=${encodeURIComponent(input)}&srlimit=5`
+      `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&list=search&srsearch=${encodeURIComponent(input)}&srlimit=1`
     );
     const searchData=await searchRes.json();
 
@@ -112,22 +141,45 @@ async function searchTopic(topicOverride=null){
 
     const bestMatch=searchData.query.search[0].title;
 
-    const summaryRes=await fetch(
-      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(bestMatch)}`
+    const pageRes=await fetch(
+      `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=extracts&explaintext=true&titles=${encodeURIComponent(bestMatch)}`
     );
-    const summaryData=await summaryRes.json();
 
-    document.getElementById("title").innerText=summaryData.title;
-    document.getElementById("overview").innerText=summaryData.extract;
+    const pageData=await pageRes.json();
+    const page=Object.values(pageData.query.pages)[0];
 
-    if(summaryData.thumbnail){
-      document.getElementById("image").innerHTML=
-        `<img src="${summaryData.thumbnail.source}">`;
+    fullText=page.extract;
+
+    document.getElementById("title").innerText=bestMatch;
+
+    if(fullText.length>800){
+      document.getElementById("overview").innerText=fullText.substring(0,800)+"...";
+      document.getElementById("toggleBtn").classList.remove("hidden");
+      collapsed=true;
+    }else{
+      document.getElementById("overview").innerText=fullText;
     }
 
   }catch(error){
     document.getElementById("title").innerText="Connection Error";
   }
+}
+
+function toggleText(){
+  if(collapsed){
+    document.getElementById("overview").innerText=fullText;
+    document.getElementById("toggleBtn").innerText="Show Less";
+    collapsed=false;
+  }else{
+    document.getElementById("overview").innerText=fullText.substring(0,800)+"...";
+    document.getElementById("toggleBtn").innerText="Show More";
+    collapsed=true;
+  }
+}
+
+function copyText(){
+  navigator.clipboard.writeText(fullText);
+  alert("Copied to clipboard");
 }
 
 function randomTopic(){
