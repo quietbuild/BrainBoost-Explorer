@@ -10,19 +10,17 @@ body {
   margin:0;
   background:#0b0f14;
   color:#e8edf2;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
 }
 
 header {
   text-align:center;
-  padding:60px 20px 30px 20px;
+  padding:50px 20px;
 }
 
 header h1 {
-  font-size:42px;
+  font-size:38px;
   margin:0;
-  font-weight:600;
-  letter-spacing:1px;
 }
 
 header p {
@@ -39,10 +37,12 @@ header p {
 .search-box {
   display:flex;
   gap:10px;
+  flex-wrap:wrap;
 }
 
 input {
   flex:1;
+  min-width:200px;
   padding:14px;
   border-radius:10px;
   border:none;
@@ -70,11 +70,7 @@ button:hover {
   background:#11161c;
   padding:25px;
   border-radius:16px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
-}
-
-.card h2 {
-  margin-top:0;
+  box-shadow:0 10px 40px rgba(0,0,0,0.4);
 }
 
 #image img {
@@ -134,25 +130,37 @@ Engineered by Vrishab Varun<br>
 </footer>
 
 <script>
-async function searchTopic(topicOverride=null) {
 
-  const input = topicOverride || document.getElementById("topicInput").value.trim();
+// Enter key search
+document.getElementById("topicInput").addEventListener("keydown", function(e){
+  if(e.key==="Enter"){
+    searchTopic();
+  }
+});
+
+async function searchTopic(topicOverride=null){
+
+  const inputField = document.getElementById("topicInput");
+  const input = topicOverride || inputField.value.trim();
   if(!input) return;
 
   document.getElementById("results").style.display="block";
-  document.getElementById("title").innerText="Thinking...";
+  document.getElementById("title").innerText="Searching...";
   document.getElementById("overview").innerText="";
+  document.getElementById("image").innerHTML="";
+  document.getElementById("related").innerHTML="";
 
-  try {
+  try{
 
-    // Intelligent search (forgiving)
-    const searchRes = await fetch(
-      `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&list=search&srsearch=${encodeURIComponent(input)}&srlimit=1`
+    let searchRes = await fetch(
+      `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&list=search&srsearch=${encodeURIComponent(input)}&srlimit=5`
     );
-    const searchData = await searchRes.json();
 
-    if(!searchData.query.search.length) {
-      document.getElementById("title").innerText="No results found";
+    let searchData = await searchRes.json();
+
+    if(!searchData.query.search.length){
+      document.getElementById("title").innerText="No Results Found";
+      document.getElementById("overview").innerText="Try a different search.";
       return;
     }
 
@@ -167,42 +175,32 @@ async function searchTopic(topicOverride=null) {
     document.getElementById("title").innerText = summaryData.title;
     document.getElementById("overview").innerText = summaryData.extract;
 
-    const imageContainer = document.getElementById("image");
-    imageContainer.innerHTML="";
-
-    if(summaryData.thumbnail) {
-      imageContainer.innerHTML = 
+    if(summaryData.thumbnail){
+      document.getElementById("image").innerHTML =
         `<img src="${summaryData.thumbnail.source}" alt="${summaryData.title}">`;
     }
 
-    // Related suggestions
-    const relatedRes = await fetch(
-      `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&list=search&srsearch=${encodeURIComponent(bestMatch)}&srlimit=6`
-    );
-
-    const relatedData = await relatedRes.json();
-    const relatedDiv = document.getElementById("related");
-    relatedDiv.innerHTML="";
-
-    relatedData.query.search.forEach(item=>{
-      const btn = document.createElement("button");
+    searchData.query.search.slice(1,6).forEach(item=>{
+      const btn=document.createElement("button");
       btn.innerText=item.title;
       btn.onclick=()=>searchTopic(item.title);
-      relatedDiv.appendChild(btn);
+      document.getElementById("related").appendChild(btn);
     });
 
-  } catch(error) {
-    document.getElementById("title").innerText="Error loading topic";
+  }catch(error){
+    document.getElementById("title").innerText="Connection Error";
+    document.getElementById("overview").innerText="Check internet connection.";
   }
 }
 
-function randomTopic() {
+function randomTopic(){
   fetch("https://en.wikipedia.org/api/rest_v1/page/random/summary")
     .then(res=>res.json())
     .then(data=>{
       searchTopic(data.title);
     });
 }
+
 </script>
 
 </body>
